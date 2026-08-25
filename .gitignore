@@ -1,0 +1,29 @@
+# Build outputs
+bin/
+obj/
+
+# Logs
+logs/
+*.txt
+
+# User-specific files
+*.user
+*.suo
+.vs/
+
+# Sensitive config
+appsettings.json
+!appsettings.Development.json
+
+# NuGet
+*.nupkg
+packages/
+
+# Reference only
+DeveloperProblemVault/
+08_Online_Banking_Simulation_with_RoleBased_Access_Transaction_Management/
+
+# OS
+.DS_Store
+Thumbs.db
+

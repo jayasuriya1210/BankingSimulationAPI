@@ -1,0 +1,327 @@
+{
+  "info": {
+    "name": "Banking Simulation API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5014" },
+    { "key": "customerToken", "value": "" },
+    { "key": "adminToken", "value": "" },
+    { "key": "staffToken", "value": "" },
+    { "key": "refreshToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login - Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r = pm.response.json();",
+                  "pm.collectionVariables.set('customerToken', r.data.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', r.data.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@bank.com\",\n  \"password\": \"Customer@123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login - Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r = pm.response.json();",
+                  "pm.collectionVariables.set('adminToken', r.data.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@bank.com\",\n  \"password\": \"Admin@123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login - Staff",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r = pm.response.json();",
+                  "pm.collectionVariables.set('staffToken', r.data.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"staff@bank.com\",\n  \"password\": \"Staff@123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/signup",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"displayName\": \"Test User\",\n  \"email\": \"testuser@bank.com\",\n  \"password\": \"Test@1234\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/refresh",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "item": [
+        {
+          "name": "Get My Accounts (Customer)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/accounts/my",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }]
+          }
+        },
+        {
+          "name": "Get Account By Id (Any Role)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/accounts/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }]
+          }
+        },
+        {
+          "name": "Get All Accounts (Admin)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/accounts",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        },
+        {
+          "name": "Freeze Account (Admin)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/accounts/1/freeze",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Suspicious activity\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Unfreeze Account (Admin)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/accounts/1/unfreeze",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Beneficiaries",
+      "item": [
+        {
+          "name": "Add Beneficiary (Customer)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/beneficiaries",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountNumber\": \"ACC0000000002\",\n  \"name\": \"My Second Account\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Beneficiaries (Customer)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/beneficiaries/my",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }]
+          }
+        },
+        {
+          "name": "Get Pending Beneficiaries (Admin)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/beneficiaries/pending",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        },
+        {
+          "name": "Review Beneficiary - Approve (Admin)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/beneficiaries/1/review",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"Approve\",\n  \"reason\": \"Verified\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Review Beneficiary - Reject (Admin)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/beneficiaries/1/review",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"Reject\",\n  \"reason\": \"Invalid account\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transfers",
+      "item": [
+        {
+          "name": "Transfer Funds (Customer)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/transfers",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": 1,\n  \"toAccountId\": 2,\n  \"amount\": 500.00,\n  \"description\": \"Test transfer\",\n  \"idempotencyKey\": \"TXN-TEST-001\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "item": [
+        {
+          "name": "Get My Transactions (Customer)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/account/1?page=1&pageSize=20",
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" },
+                { "key": "from", "value": "2025-01-01", "disabled": true },
+                { "key": "to", "value": "2026-12-31", "disabled": true },
+                { "key": "type", "value": "Transfer", "disabled": true },
+                { "key": "minAmount", "value": "100", "disabled": true },
+                { "key": "maxAmount", "value": "5000", "disabled": true }
+              ]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }]
+          }
+        },
+        {
+          "name": "Get All Transactions (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?page=1&pageSize=20",
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" },
+                { "key": "from", "value": "2025-01-01", "disabled": true },
+                { "key": "to", "value": "2026-12-31", "disabled": true }
+              ]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Statements",
+      "item": [
+        {
+          "name": "Get Statement PDF (Customer)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/statements?accountId=1&from=2025-01-01&to=2026-12-31",
+              "query": [
+                { "key": "accountId", "value": "1" },
+                { "key": "from", "value": "2025-01-01" },
+                { "key": "to", "value": "2026-12-31" }
+              ]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }]
+          }
+        },
+        {
+          "name": "Get Statement PDF (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/statements?accountId=1&from=2025-01-01&to=2026-12-31",
+              "query": [
+                { "key": "accountId", "value": "1" },
+                { "key": "from", "value": "2025-01-01" },
+                { "key": "to", "value": "2026-12-31" }
+              ]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        }
+      ]
+    }
+  ]
+}
