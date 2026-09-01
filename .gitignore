@@ -5,6 +5,7 @@ obj/
 # Logs
 logs/
 *.txt
+*.pdf
 
 # User-specific files
 *.user

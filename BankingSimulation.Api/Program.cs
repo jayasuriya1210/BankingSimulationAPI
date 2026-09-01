@@ -20,23 +20,23 @@ builder.Host.UseSerilog((ctx, cfg) => cfg.ReadFrom.Configuration(ctx.Configurati
 builder.Services.AddDbContext<BankingDbContext>(opt =>
     opt.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-// Keycloak settings
+// Keycloak settings (only one instance of KeycloakSettings is needed, so we register it as a singleton)
 var keycloakSettings = builder.Configuration.GetSection("Keycloak").Get<KeycloakSettings>()!;
 builder.Services.AddSingleton(keycloakSettings);
 
-// JWT validation via Keycloak JWKS
+// JWT validation via Keycloak 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>
     {
-        opt.Authority             = keycloakSettings.Issuer;
-        opt.Audience              = keycloakSettings.ClientId;
-        opt.RequireHttpsMetadata  = false;
+        opt.Authority = keycloakSettings.Issuer;
+        opt.Audience = keycloakSettings.ClientId;
+        opt.RequireHttpsMetadata = false;
         opt.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer           = true,
-            ValidIssuer              = keycloakSettings.Issuer,
-            ValidateAudience         = false,
-            ValidateLifetime         = true,
+            ValidateIssuer = true,
+            ValidIssuer = keycloakSettings.Issuer,
+            ValidateAudience = false,
+            ValidateLifetime = true,
             ValidateIssuerSigningKey = true
         };
     });
@@ -76,11 +76,11 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Banking Simulation API", Version = "v1" });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Name         = "Authorization",
-        Type         = SecuritySchemeType.Http,
-        Scheme       = "Bearer",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
         BearerFormat = "JWT",
-        In           = ParameterLocation.Header
+        In = ParameterLocation.Header
     });
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {

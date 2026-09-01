@@ -27,6 +27,10 @@ public class AuthService(
 
     public async Task<TokenResponse> SignupAsync(SignupRequest req, string? correlationId)
     {
+        var existingLocalUser = await userRepo.GetByEmailAsync(req.Email);
+        if (existingLocalUser is not null)
+            throw new InvalidOperationException("Email already registered.");
+
         var adminToken = await keycloak.GetAdminTokenAsync()
             ?? throw new InvalidOperationException("Could not obtain Keycloak admin token.");
 
@@ -40,16 +44,27 @@ public class AuthService(
 
         await keycloak.AssignRealmRoleAsync(adminToken, keycloakUserId, "Customer");
 
-        var user = new BankUser
+        var user = await userRepo.GetByEmailAsync(req.Email);
+        if (user is null)
         {
-            KeycloakSubject = keycloakUserId,
-            Email           = req.Email,
-            DisplayName     = req.DisplayName,
-            Role            = "Customer",
-            IsActive        = true,
-            CreatedAtUtc    = DateTime.UtcNow
-        };
-        await userRepo.CreateAsync(user);
+            user = new BankUser
+            {
+                KeycloakSubject = keycloakUserId,
+                Email           = req.Email,
+                DisplayName     = req.DisplayName,
+                Role            = "Customer",
+                IsActive        = true,
+                CreatedAtUtc    = DateTime.UtcNow
+            };
+            await userRepo.CreateAsync(user);
+        }
+        else
+        {
+            user.KeycloakSubject = keycloakUserId;
+            user.DisplayName = req.DisplayName;
+            user.IsActive = true;
+            await userRepo.UpdateAsync(user);
+        }
 
         await auditService.LogAsync(user.Id, "Signup", "BankUser", user.Id.ToString(), null, "Success", correlationId);
 

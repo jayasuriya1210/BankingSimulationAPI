@@ -92,6 +92,62 @@ public class AuthServiceTests
     }
 
     [Fact]
+    public async Task Signup_LocalDuplicateEmail_ThrowsBeforeCreatingKeycloakUser()
+    {
+        var user = new BankUser
+        {
+            Id = 8,
+            KeycloakSubject = "existing-subject",
+            Email = "dup@bank.com",
+            DisplayName = "Existing User",
+            Role = "Customer",
+            IsActive = true
+        };
+        _userRepo.Setup(r => r.GetByEmailAsync("dup@bank.com")).ReturnsAsync(user);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _sut.SignupAsync(new SignupRequest("Test User", "dup@bank.com", "Pass@123"), null));
+
+        _keycloak.Verify(k => k.CreateUserAsync(It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Signup_LocalUserAppearsAfterKeycloakCreate_ReLinksExistingUser()
+    {
+        var user = new BankUser
+        {
+            Id = 9,
+            KeycloakSubject = "old-subject",
+            Email = "test@bank.com",
+            DisplayName = "Old User",
+            Role = "Customer",
+            IsActive = false
+        };
+
+        _userRepo.SetupSequence(r => r.GetByEmailAsync("test@bank.com"))
+            .ReturnsAsync((BankUser?)null)
+            .ReturnsAsync(user);
+        _keycloak.Setup(k => k.GetAdminTokenAsync()).ReturnsAsync("admin-token");
+        _keycloak.Setup(k => k.CreateUserAsync("admin-token", "test@bank.com", "Test User", "Pass@123"))
+            .ReturnsAsync((HttpStatusCode.Created, "test-sub"));
+        _keycloak.Setup(k => k.AssignRealmRoleAsync("admin-token", "test-sub", "Customer"))
+            .Returns(Task.CompletedTask);
+        _keycloak.Setup(k => k.GetTokenAsync("test@bank.com", "Pass@123"))
+            .ReturnsAsync(new KeycloakTokenResult(FakeJwt, "refresh"));
+        _userRepo.Setup(r => r.UpdateAsync(user)).Returns(Task.CompletedTask);
+
+        var result = await _sut.SignupAsync(new SignupRequest("Test User", "test@bank.com", "Pass@123"), null);
+
+        Assert.Equal(9, result.UserId);
+        Assert.Equal("test-sub", user.KeycloakSubject);
+        Assert.Equal("Test User", user.DisplayName);
+        Assert.True(user.IsActive);
+        _userRepo.Verify(r => r.CreateAsync(It.IsAny<BankUser>()), Times.Never);
+        _userRepo.Verify(r => r.UpdateAsync(user), Times.Once);
+    }
+
+    [Fact]
     public async Task Signup_NoAdminToken_ThrowsInvalidOperation()
     {
         _keycloak.Setup(k => k.GetAdminTokenAsync()).ReturnsAsync((string?)null);
